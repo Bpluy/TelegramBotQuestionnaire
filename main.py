@@ -52,9 +52,6 @@ async def Filling_Form(user_id, stage):
     msg = func.GetMessageByStage(stage)
     await bot.send_message(user_id, f"{msg}", reply_markup=keyboard)
 
-async def Change_Field(user_id, stage):
-    msg = func.GetMessageByStage(stage)
-    await bot.send_message(user_id,msg)
 
 #log
 logging.basicConfig(level=logging.INFO)
@@ -68,8 +65,6 @@ clients = dict()
 @dp.message_handler(commands=['start'])
 async def send_welcome_message(message: types.Message):
     keyboard = types.InlineKeyboardMarkup(row_width=1, inline_keyboard=[[buttons.fillFormButton],[buttons.googleformButton],[buttons.answerButton],[buttons.callButton]])
-    if message.from_user.id == cfg.ADMIN_ID:
-        keyboard.add()
     await bot.send_message(message.chat.id, "Вы находитесь в главном меню. Выберите необходимое действие", reply_markup=keyboard)
 
 #callbacks
@@ -88,10 +83,6 @@ async def callbacks_buy(call: types.CallbackQuery):
             objClient = clients.get(call.from_user.id)
             objClient.dec_stage()
             await Filling_Form(call.from_user.id, objClient.get_stage())
-        case 'change':
-            objClient = clients.get(call.from_user.id)
-            objClient.enable_change()
-            await bot.send_message(call.from_user.id,'Введите номер этапа, в котором вы хотите изменить ответ')
         case 'view':
             msg = func.MakeForm(clients.get(call.from_user.id))
             keyboard = types.InlineKeyboardMarkup(inline_keyboard=[[buttons.acceptButton],[buttons.mainmenuButton]])
@@ -101,11 +92,15 @@ async def callbacks_buy(call: types.CallbackQuery):
             await bot.send_message(call.from_user.id,'Перейдите с помощью кнопки на гугл-форму', reply_markup=keyboard)
         case 'accept':
             obj = clients.get(call.from_user.id)
-            msg = func.MakeForm(obj)
-            await bot.send_message(cfg.ADMIN_ID, f"Получена новая заявка от @{call.from_user.username}")
-            await bot.send_message(cfg.ADMIN_ID, msg)
-            keyboard = types.InlineKeyboardMarkup(inline_keyboard=[[buttons.mainmenuButton]])
-            await bot.send_message(call.from_user.id,'Анкета успешно отправлена',reply_markup=keyboard)
+            if obj.isAllowedAccept == True:
+                msg = func.MakeForm(obj)
+                await bot.send_message(cfg.SUBADMIN_ID, f"Получена новая заявка от @{call.from_user.username}")
+                await bot.send_message(cfg.SUBADMIN_ID, msg)            
+                await bot.send_message(cfg.ADMIN_ID, f"Получена новая заявка от @{call.from_user.username}")
+                await bot.send_message(cfg.ADMIN_ID, msg)
+                keyboard = types.InlineKeyboardMarkup(inline_keyboard=[[buttons.mainmenuButton]])
+                await bot.send_message(call.from_user.id,'Анкета успешно отправлена',reply_markup=keyboard)
+                obj.disable_accept()
         case 'answer':
             keyboard = types.InlineKeyboardMarkup(inline_keyboard=[[buttons.mainmenuButton]])
             with open(cfg.PHOTO_PATH, 'rb') as photo:
@@ -157,6 +152,7 @@ async def check_text(message: types.Message):
     elif objClient.get_stage() == 16:
         msg = func.GetMessageByStage(16)
         keyboard = types.InlineKeyboardMarkup(inline_keyboard=[[buttons.viewButton],[buttons.acceptButton],[buttons.mainmenuButton]])
+        objClient.allow_accept()
         await bot.send_message(message.from_user.id, msg, reply_markup=keyboard)
 
 #run
