@@ -17,6 +17,7 @@ class ClientInfo:
         self.Payment = ''               #необходимость в платёжной системе
         self.ActualStage = 1
         self.IsChanging = False
+        self.isAllowedAccept = False
 
     def inc_stage(self):
         self.ActualStage = self.ActualStage + 1        
@@ -100,9 +101,7 @@ class ClientInfo:
     def get_payment(self):
         return self.Payment
     
-    def enable_change(self):
-        self.IsChanging = True
-    def disable_change(self):
-        self.IsChanging = False
-    def get_change(self):
-        return self.IsChanging
+    def allow_accept(self):
+        self.isAllowedAccept = True
+    def disable_accept(self):
+        self.isAllowedAccept = False
